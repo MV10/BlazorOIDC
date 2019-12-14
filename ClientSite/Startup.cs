@@ -32,8 +32,6 @@ namespace ClientSite
             services.AddServerSideBlazor();
             services.AddSingleton<WeatherForecastService>();
 
-            // nuget Microsoft.AspNetCore.Authentication.OpenIdConnect
-            
             // add this
             services.AddAuthentication(options =>
             {
