@@ -1,0 +1,30 @@
+﻿@page "/"
+@inject AuthenticationStateProvider AuthState
+
+<h1>Hello, @Username</h1>
+
+<p>Welcome to your new app.</p>
+
+<p>
+    <a href="/Logout">Logout</a>
+</p>
+
+@code
+{
+    private string Username = "Anonymous User";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        Username = state.User.Identity.Name;
+        
+        if (string.IsNullOrWhiteSpace(Username))
+            Username = 
+                state.User.Claims
+                .Where(c => c.Type.Equals("sid"))
+                .Select(c => c.Value)
+                .FirstOrDefault() ?? string.Empty;
+        
+        await base.OnInitializedAsync();
+    }
+}
