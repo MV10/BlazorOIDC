@@ -21,7 +21,7 @@
         if (string.IsNullOrWhiteSpace(Username))
             Username = 
                 state.User.Claims
-                .Where(c => c.Type.Equals("sid"))
+                .Where(c => c.Type.Equals("name")) // or "sid"
                 .Select(c => c.Value)
                 .FirstOrDefault() ?? string.Empty;
         

@@ -47,6 +47,10 @@ namespace ClientSite
                 options.ResponseType = "code";
                 options.SaveTokens = true;
 
+                // this was missing from the article; allows
+                // use of the "name" claim in Index.razor
+                options.GetClaimsFromUserInfoEndpoint = true;
+
                 options.Events = new OpenIdConnectEvents
                 {
                     // called if user clicks Cancel during login
