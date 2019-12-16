@@ -34,9 +34,24 @@ namespace ClientSite.Pages
                 {
                     var authResult = await HttpContext.AuthenticateAsync("oidc");
                     DateTimeOffset expiration = authResult.Properties.ExpiresUtc.Value;
+                    string idToken = await HttpContext.GetTokenAsync("id_token");
                     string accessToken = await HttpContext.GetTokenAsync("access_token");
                     string refreshToken = await HttpContext.GetTokenAsync("refresh_token");
-                    Cache.Add(sid, expiration, accessToken, refreshToken);
+
+                    // part 3
+                    string expiresAtToken = await HttpContext.GetTokenAsync("expires_at");
+                    if (!DateTimeOffset.TryParse(expiresAtToken, out var refreshAt) || refreshAt < DateTimeOffset.UtcNow || string.IsNullOrWhiteSpace(refreshToken))
+                    {
+                        refreshAt = DateTimeOffset.MaxValue;
+                    }
+                    else
+                    {
+                        var seconds = refreshAt.Subtract(DateTimeOffset.UtcNow).TotalSeconds;
+                        refreshAt = DateTimeOffset.UtcNow.AddSeconds(seconds / 2);
+                        System.Diagnostics.Debug.WriteLine($"refresh_at: {refreshAt.ToString("o")}");
+                    }
+
+                    Cache.Add(sid, expiration, idToken, accessToken, refreshToken, refreshAt);
                 }
             }
             return Page();
@@ -48,8 +63,8 @@ namespace ClientSite.Pages
             var authProps = new AuthenticationProperties
             {
                 IsPersistent = true,
-                //ExpiresUtc = DateTimeOffset.UtcNow.AddHours(15),
-                ExpiresUtc = DateTimeOffset.UtcNow.AddSeconds(30),
+                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(15),
+                //ExpiresUtc = DateTimeOffset.UtcNow.AddSeconds(30),
                 RedirectUri = Url.Content("~/")
             };
             return Challenge(authProps, "oidc");

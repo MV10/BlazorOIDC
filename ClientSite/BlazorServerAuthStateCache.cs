@@ -11,7 +11,7 @@ namespace ClientSite
         public bool HasSubjectId(string subjectId)
             => Cache.ContainsKey(subjectId);
 
-        public void Add(string subjectId, DateTimeOffset expiration, string accessToken, string refreshToken)
+        public void Add(string subjectId, DateTimeOffset expiration, string idToken, string accessToken, string refreshToken, DateTimeOffset refreshAt)
         {
             System.Diagnostics.Debug.WriteLine($"Caching sid: {subjectId}");
 
@@ -19,8 +19,10 @@ namespace ClientSite
             {
                 SubjectId = subjectId,
                 Expiration = expiration,
+                IdToken = idToken,
                 AccessToken = accessToken,
-                RefreshToken = refreshToken
+                RefreshToken = refreshToken,
+                RefreshAt = refreshAt
             };
             Cache.AddOrUpdate(subjectId, data, (k, v) => data);
         }

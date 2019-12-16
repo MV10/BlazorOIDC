@@ -1,4 +1,7 @@
 ﻿@page "/"
+@using IdentityModel.Client;
+@inject IHttpClientFactory httpClientFactory
+@inject BlazorServerAuthStateCache AuthStateCache
 @inject AuthenticationStateProvider AuthState
 
 <h1>Hello, @Username</h1>
@@ -9,13 +12,31 @@
     <a href="/Logout">Logout</a>
 </p>
 
+<p>
+    <button @onclick="ApiCall">Call API</button>
+</p>
+
+<p>
+    API Result:<br/>
+    @ApiResult
+</p>
+
 @code
 {
     private string Username = "Anonymous User";
+    private string ApiResult = "(no result available)";
+
+    private string SubjectId;
 
     protected override async Task OnInitializedAsync()
     {
         var state = await AuthState.GetAuthenticationStateAsync();
+
+        SubjectId =
+            state.User.Claims
+            .Where(c => c.Type.Equals("sid"))
+            .Select(c => c.Value)
+            .FirstOrDefault() ?? string.Empty;
 
         Username =
             state.User.Claims
@@ -25,4 +46,38 @@
 
         await base.OnInitializedAsync();
     }
+
+    private async Task ApiCall()
+    {
+        if(string.IsNullOrWhiteSpace(SubjectId))
+        {
+            ApiResult = "(no SubjectId)";
+            StateHasChanged();
+            return;
+        }
+
+        var data = AuthStateCache.Get(SubjectId);
+        if(data == null)
+        {
+            ApiResult = "(SubjectId not in cache)";
+            StateHasChanged();
+            return;
+        }
+
+        var client = httpClientFactory.CreateClient();
+        client.SetBearerToken(data.AccessToken);
+        var request = new HttpRequestMessage(HttpMethod.Get, "https://demo.identityserver.io/api/test");
+
+        var response = await client.SendAsync(request);
+        if (response.IsSuccessStatusCode)
+        {
+            ApiResult = await response.Content.ReadAsStringAsync();
+        }
+        else
+        {
+            ApiResult = $"{response.StatusCode} ({response.ReasonPhrase})";
+        }
+        StateHasChanged();
+    }
+
 }

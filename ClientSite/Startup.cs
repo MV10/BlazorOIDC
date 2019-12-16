@@ -15,6 +15,8 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Components.Authorization;
+using IdentityModel.Client;
+using System.Net.Http;
 
 namespace ClientSite
 {
@@ -33,6 +35,18 @@ namespace ClientSite
             services.AddServerSideBlazor();
             services.AddSingleton<WeatherForecastService>();
 
+            // part 3: add this
+            services.AddHttpClient();
+
+            // part 3: add this
+            services.AddSingleton<IDiscoveryCache>(sp =>
+            {
+                var factory = sp.GetRequiredService<IHttpClientFactory>();
+                return new DiscoveryCache(
+                    "https://demo.identityserver.io/",
+                    () => factory.CreateClient());
+            });
+
             // add this
             services.AddAuthentication(options =>
             {
@@ -47,10 +61,12 @@ namespace ClientSite
                 options.ClientSecret = "secret";
                 options.ResponseType = "code";
                 options.SaveTokens = true;
-
-                // for API add offline_access scope to get refresh_token
-
                 options.GetClaimsFromUserInfoEndpoint = true;
+
+                // part 3
+                options.Scope.Add("openid");            // OIDC standard
+                options.Scope.Add("api");               // IDS4 name of a protected resource
+                options.Scope.Add("offline_access");    // OIDC standard, required to get refresh_token
 
                 options.Events = new OpenIdConnectEvents
                 {
