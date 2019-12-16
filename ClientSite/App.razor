@@ -1,10 +1,13 @@
+@inject NavigationManager NavManager
+
 <Router AppAssembly="@typeof(Program).Assembly">
     <Found Context="routeData">
         <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
             <NotAuthorized>
-                <h1>Sorry</h1>
-                <p>You're not authorized to reach this page.</p>
-                <p>You may need to log in as a different user.</p>
+                @{ 
+                    // part 2: add this
+                    NavManager.NavigateTo("/Logout", true); 
+                }
             </NotAuthorized>
             <Authorizing>
                 <h1>Authentication in progress</h1>
@@ -21,4 +24,6 @@
         </CascadingAuthenticationState>
     </NotFound>
 </Router>
+
+
 

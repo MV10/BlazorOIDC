@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace ClientSite
 {
@@ -47,8 +48,8 @@ namespace ClientSite
                 options.ResponseType = "code";
                 options.SaveTokens = true;
 
-                // this was missing from the article; allows
-                // use of the "name" claim in Index.razor
+                // for API add offline_access scope to get refresh_token
+
                 options.GetClaimsFromUserInfoEndpoint = true;
 
                 options.Events = new OpenIdConnectEvents
@@ -64,13 +65,18 @@ namespace ClientSite
             });
 
             // add this
-            services.AddMvcCore(options =>
-            {
-                var policy = new AuthorizationPolicyBuilder()
-                    .RequireAuthenticatedUser() // site-wide auth
-                    .Build();
-                options.Filters.Add(new AuthorizeFilter(policy));
-            });
+            // part 2: unnecessary, Blazor ignores it
+            //services.AddMvcCore(options =>
+            //{
+            //    var policy = new AuthorizationPolicyBuilder()
+            //        .RequireAuthenticatedUser() // site-wide auth
+            //        .Build();
+            //    options.Filters.Add(new AuthorizeFilter(policy));
+            //});
+
+            // part 2: add these
+            services.AddSingleton<BlazorServerAuthStateCache>();
+            services.AddScoped<AuthenticationStateProvider, BlazorServerAuthState>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
